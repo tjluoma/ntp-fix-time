@@ -35,10 +35,6 @@ then
 fi
 
 
-
-NTPHOST=$(systemsetup -getnetworktimeserver 2>/dev/null | awk '{print $4}' || echo -n 'time.apple.com')
-
-
 log "Starting"
 
 
@@ -52,10 +48,21 @@ then
 			#
 			# (It still exists in 10.9.1)
 
-		( ntpdate -u "${NTPHOST}"  | tee -a "$LOG") || ( ntpd --quit  | tee -a "$LOG") || die "ntpdate and ntpd failed"
+			# Get the servers from the appropriate file
+		IFS=$'\n' NTPHOSTS=($(grep '^server' /etc/ntp.conf | awk -F' ' '{print $NF}'))
+
+			# if we didn't get any from the pre vious command, fall back on 'time.apple.com'
+		[[ "$NTPHOSTS" == "" ]] && NTPHOSTS='time.apple.com'
+
+			# Keep trying until one works
+		for NTPHOST in ${NTPHOSTS}
+		do
+				ntpdate -b -u ${NTPHOST} | tee -a "$LOG" && break
+		done
+
 else
 			# not sure if this is correct
-		( ntpd --quit 2>&1 ) | tee -a "$LOG"
+		 ntpd --quit 2>&1 | tee -a "$LOG"
 fi
 
 log "finished"
