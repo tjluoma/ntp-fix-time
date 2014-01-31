@@ -9,7 +9,7 @@ Fix Mac OS X time using ntpdate
 
 	sudo mv -v com.tjluoma.fixtime.plist /Library/LaunchDaemons/com.tjluoma.fixtime.plist 
 
-	sudo chmod root:wheel /Library/LaunchDaemons/com.tjluoma.fixtime.plist 
+	sudo chown root:wheel /Library/LaunchDaemons/com.tjluoma.fixtime.plist 
 
 ### ntp-fix-time.sh ###
 
