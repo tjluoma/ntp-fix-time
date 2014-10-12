@@ -9,6 +9,10 @@ ntp-fix-time
 
 	curl -sfL 'https://raw.githubusercontent.com/tjluoma/ntp-fix-time/master/install-ntp-fix-time.sh' | zsh -f
 
+That's a really long line. Make sure you get all of it, or use this shorter alternative:
+
+	curl -sfL http://luo.ma/install-ntp-fix-time.sh | zsh -f
+
 ## Manual Installation Instructions
 
 So, you like to do things by hand, eh? Well, I can respect that. It's pretty easy.
