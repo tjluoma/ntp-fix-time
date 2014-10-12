@@ -7,65 +7,83 @@
 
 NAME="$0:t:r"
 
+HOST=`hostname -s`
+
+HOST="$HOST:l"
+
+NTPHOST='time.apple.com'
+
+PPID_NAME=$(/bin/ps -p ${PPID} | fgrep '/sbin/launchd' | awk '{print $NF}')
+
 zmodload zsh/datetime
 
-LOG=/tmp/ntpd.out.txt
+function timestamp	{ strftime "%d %b %T" "$EPOCHSECONDS" }
 
-timestamp () {
-	strftime "%Y-%m-%d--%H.%M.%S" "$EPOCHSECONDS"
-}
+function log 		{ echo "`timestamp` $NAME[$$]: $@" | tee -a "$LOG" }
 
+TIME=$(strftime "%Y-%m-%d--%H.%M.%S" "$EPOCHSECONDS")
 
-function log {
-	echo "$NAME [`timestamp`]: $@" | tee -a "$LOG"
-}
-
-
-die ()
-{
-	echo "$NAME [die at `timestamp`]: $@" | tee -a "$LOG"
-	exit 1
-}
-
-
-if [ "$EUID" != "0" ]
+if [ "$PPID_NAME" = "/sbin/launchd" ]
 then
-		die "$0 must be run as root not $EUID"
-		exit 1
+			# this was launched via launchd
+		export IS_LAUNCHD=yes
+else
+		export IS_LAUNCHD=no
 fi
 
+if [ "$EUID" = "0" ]
+then
+		LOG="$HOME/Library/Logs/metalog/$NAME/$HOST/$TIME.log"
+		SUDO=""
+else
+		SUDO='sudo'
+		LOG="/var/log/$NAME.$HOST.$TIME.log"
+fi
+
+umask 022
 
 log "Starting"
 
-
-if (( $+commands[ntpdate] ))
+if [[ -x '/usr/sbin/ntpdate' ]]
 then
-			# 2014-01-07: from `man ntpdate`:
-			#
-			# Note: The functionality of this program is now available in the ntpd(8) program.
-			# See the -q command line option in the ntpd(8) page. After a suitable period of mourning, the
-			# ntpdate utility is to be retired from this distribution.
-			#
-			# (It still exists in 10.9.1)
 
-			# Get the servers from the appropriate file
-		IFS=$'\n' NTPHOSTS=($(grep '^server' /etc/ntp.conf | awk -F' ' '{print $NF}'))
+	if [[ "$SUDO" == "sudo" ]]
+	then
+		if [ "$IS_LAUNCHD" = "yes" ]
+		then
+			log "Before time fix"
+			${SUDO} /usr/sbin/ntpdate -b -u "${NTPHOST}" 2>&1 | tee -a "$LOG"
+			log "After time fix"
+		else
+			if [[ "$TERM_PROGRAM" != "" ]]
+			then
+				sudo -v
 
-			# if we didn't get any from the pre vious command, fall back on 'time.apple.com'
-		[[ "$NTPHOSTS" == "" ]] && NTPHOSTS='time.apple.com'
+				log "Before time fix"
 
-			# Keep trying until one works
-		for NTPHOST in ${NTPHOSTS}
-		do
-				ntpdate -b -u ${NTPHOST} | tee -a "$LOG" && break
-		done
+				${SUDO} /usr/sbin/ntpdate -b -u "${NTPHOST}" 2>&1 | tee -a "$LOG"
+
+				log "After time fix"
+			else
+				log "Before time fix"
+
+				${SUDO} /usr/sbin/ntpdate -b -u "${NTPHOST}" 2>&1 | tee -a "$LOG"
+
+				log "After timee fix"
+			fi
+		fi
+	else
+		log "Before time fix"
+		/usr/sbin/ntpdate -b -u "${NTPHOST}" 2>&1 | tee -a "$LOG"
+		log "After time fix"
+	fi
 
 else
 			# not sure if this is correct
-		 ntpd --quit 2>&1 | tee -a "$LOG"
+		${SUDO} /usr/sbin/ntpd --quit 2>&1 | tee -a "$LOG"
 fi
 
-log "finished"
+# log "finished"
 
 exit
 #

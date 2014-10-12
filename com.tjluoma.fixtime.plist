@@ -4,17 +4,14 @@
 <dict>
 	<key>Label</key>
 	<string>com.tjluoma.fixtime</string>
-	<key>ProgramArguments</key>
-	<array>
-		<string>/usr/bin/env</string>
-		<string>ntp-fix-time.sh</string>
-	</array>
+	<key>Program</key>
+	<string>/usr/local/bin/ntp-fix-time.sh</string>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>StandardErrorPath</key>
-	<string>/tmp/ntpd.err.txt</string>
+	<string>/var/log/com.tjluoma.fixtime.log</string>
 	<key>StandardOutPath</key>
-	<string>/tmp/ntpd.out.txt</string>
+	<string>/var/log/com.tjluoma.fixtime.log</string>
 	<key>StartInterval</key>
 	<integer>14400</integer>
 </dict>
