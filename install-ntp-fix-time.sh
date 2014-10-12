@@ -32,7 +32,7 @@ mkdir -p "$TEMPDIR"
 cd "$TEMPDIR"
 
 echo "$NAME: fetching $PLIST_URL..."
-curl --remote-name --progress-bar --location --fail "$PLIST_URL"  \
+curl --remote-name --progress-bar --location --fail "$PLIST_URL" \
 	|| die "Failed to download $PLIST_URL"
 
 /bin/chmod -vv 644 "$PLIST_URL:t" \
@@ -51,10 +51,14 @@ sudo /usr/sbin/chown -v 'root:wheel' "$SCRIPT_URL:t" "$PLIST_URL:t" \
 sudo /bin/mv -vf "$SCRIPT_URL:t" "$SCRIPT_PATH" \
 	|| die "Failed to move $SCRIPT_URL:t to $SCRIPT_PATH"
 
+	# We need to unload the plist if it already exists
+	# but it might not so we can ignore errors
+sudo /bin/launchctl unload "$PLIST_PATH" 2>&1 >/dev/null
+
 sudo /bin/mv -vf "$PLIST_URL:t" "$PLIST_PATH" \
 	|| die "Failed to move $PLIST_URL:t to $PLIST_PATH"
 
-sudo /bin/launchctl load "$PLIST_PATH" \
+sudo /bin/launchctl load "$PLIST_PATH" 2>&1 >/dev/null \
 	&& echo "$NAME: loaded $PLIST_PATH into launchd" \
 	|| die "Failed to load $PLIST_PATH into launchd"
 
