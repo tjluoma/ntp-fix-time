@@ -6,7 +6,7 @@
 # Web: 	http://RhymesWithDiploma.com
 # Date:	2014-10-11
 
-NAME="$0:t:r"
+NAME="install-ntp-fix-time.sh"
 
 function die
 {
